@@ -30,6 +30,11 @@ class User(Base, TimestampMixin):
     accounts: Mapped[list["Account"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     transactions: Mapped[list["Transaction"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     budgets: Mapped[list["Budget"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    debts: Mapped[list["Debt"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    financial_goals: Mapped[list["FinancialGoal"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    financial_profile: Mapped["FinancialProfile | None"] = relationship(back_populates="user", uselist=False, cascade="all, delete-orphan")
+    income_sources: Mapped[list["IncomeSource"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    fixed_expenses: Mapped[list["FixedExpense"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 
 class Account(Base, TimestampMixin):
@@ -66,6 +71,81 @@ class Transaction(Base, TimestampMixin):
 
     user: Mapped["User"] = relationship(back_populates="transactions")
     account: Mapped["Account"] = relationship(back_populates="transactions")
+
+
+class Debt(Base, TimestampMixin):
+    __tablename__ = "debts"
+
+    id: Mapped[str] = mapped_column(
+        String(255), primary_key=True, default=lambda: str(uuid4())
+    )
+    user_id: Mapped[str] = mapped_column(String(255), index=True)
+    name: Mapped[str] = mapped_column(String(255))  # e.g. "Personal Loan"
+    total_amount: Mapped[float] = mapped_column(Float, nullable=False)
+    remaining_amount: Mapped[float] = mapped_column(Float, nullable=False)
+    interest_rate: Mapped[float] = mapped_column(Float, default=0.0)  # percentage per month
+    payment_per_month: Mapped[float] = mapped_column(Float, default=0.0)
+    start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    user: Mapped["User"] = relationship(back_populates="debts")
+
+
+class FinancialGoal(Base, TimestampMixin):
+    __tablename__ = "financial_goals"
+
+    id: Mapped[str] = mapped_column(
+        String(255), primary_key=True, default=lambda: str(uuid4())
+    )
+    user_id: Mapped[str] = mapped_column(String(255), index=True)
+    name: Mapped[str] = mapped_column(String(255))  # e.g. "BSc Tuition"
+    target_amount: Mapped[float] = mapped_column(Float, nullable=False)
+    saved_amount: Mapped[float] = mapped_column(Float, default=0.0)
+    deadline: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    category: Mapped[str] = mapped_column(String(100), default="education")  # education, travel, emergency, shopping, other
+
+    user: Mapped["User"] = relationship(back_populates="financial_goals")
+
+
+class FinancialProfile(Base, TimestampMixin):
+    __tablename__ = "financial_profiles"
+
+    id: Mapped[str] = mapped_column(
+        String(255), primary_key=True, default=lambda: str(uuid4())
+    )
+    user_id: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    currency: Mapped[str] = mapped_column(String(10), default="THB")
+    salary_day: Mapped[int] = mapped_column(default=1)  # day of month (1-28)
+    onboarding_complete: Mapped[bool] = mapped_column(default=False)
+
+    user: Mapped["User"] = relationship(back_populates="financial_profile")
+
+
+class IncomeSource(Base, TimestampMixin):
+    __tablename__ = "income_sources"
+
+    id: Mapped[str] = mapped_column(
+        String(255), primary_key=True, default=lambda: str(uuid4())
+    )
+    user_id: Mapped[str] = mapped_column(String(255), index=True)
+    name: Mapped[str] = mapped_column(String(255))  # e.g. "Monthly Salary"
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    type: Mapped[str] = mapped_column(String(50), default="salary")  # salary, freelance, investment, other
+
+    user: Mapped["User"] = relationship(back_populates="income_sources")
+
+
+class FixedExpense(Base, TimestampMixin):
+    __tablename__ = "fixed_expenses"
+
+    id: Mapped[str] = mapped_column(
+        String(255), primary_key=True, default=lambda: str(uuid4())
+    )
+    user_id: Mapped[str] = mapped_column(String(255), index=True)
+    name: Mapped[str] = mapped_column(String(255))  # e.g. "Rent", "Food", "Transport"
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    category: Mapped[str] = mapped_column(String(100))  # housing, food, transport, bills, subscriptions
+
+    user: Mapped["User"] = relationship(back_populates="fixed_expenses")
 
 
 class Budget(Base, TimestampMixin):

@@ -30,7 +30,6 @@ export function TopBar() {
           <Bell className="h-4 w-4" />
         </Button>
         <UserButton
-          afterSignOutUrl="/sign-in"
           appearance={{
             elements: {
               avatarBox: "h-8 w-8",
